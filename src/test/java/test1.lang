@@ -1,0 +1,19 @@
+function foo()
+print("this is function")
+end
+
+main()
+string s1 = "hey"
+string s2 = "world"
+string s3 = s1 + s2
+print(s3)
+array arr = [s1, s2, s3]
+for(_s:arr)
+print(_s)
+od
+foo()
+end
+
+
+
+

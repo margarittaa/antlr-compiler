@@ -1,0 +1,12 @@
+main()
+int number = 25
+float _t
+float squareRoot = number / 2
+do
+_t = squareRoot
+squareRoot = (_t + (number / _t)) / 2
+while ((_t - squareRoot) <> 0)
+print(squareRoot)
+end
+
+

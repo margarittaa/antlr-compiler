@@ -1,0 +1,13 @@
+main()
+int _a = 18
+int _b = 30
+while (_a <> 0) and (_b <> 0)
+if (_a > _b)
+_a = _a % _b
+else
+_b = _b % _a
+fi
+od
+int nod = _a + _b
+print(nod)
+end
