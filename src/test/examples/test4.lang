@@ -1,0 +1,8 @@
+main()
+string hello = "hello"
+hello = "world"
+int lol = 11
+if (lol > 1)
+print("hey")
+fi
+end

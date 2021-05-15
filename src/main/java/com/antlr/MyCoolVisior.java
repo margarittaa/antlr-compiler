@@ -5,6 +5,16 @@ import nodes.*;
 import java.util.ArrayList;
 
 public class MyCoolVisior extends LangBaseVisitor<Node>{
+   ArrayList<String> declaredVars = new ArrayList<>();
+
+   public boolean isVarDeclared(String id) {
+       for (String var : declaredVars) {
+           if (var.contains(id))
+               return true;
+       }
+       return false;
+   }
+
     @Override
     public Node visitProgram(LangParser.ProgramContext ctx) {
         ProgramNode program = new ProgramNode();
@@ -65,17 +75,36 @@ public class MyCoolVisior extends LangBaseVisitor<Node>{
 
     @Override
     public Node visitVar_define(LangParser.Var_defineContext ctx) {
+
         VarDefineNode varDefine = new VarDefineNode();
+        if (ctx.type() != null)
+            varDefine.type = ctx.type().getText();
         varDefine.id = ctx.ID().getText();
+        declaredVars.add(varDefine.id);
         if(ctx.expr() != null) {
             varDefine.exprs = new ArrayList<>();
             for (int i = 0; i < ctx.expr().size(); i++)
                 varDefine.exprs.add(this.visitExpr(ctx.expr(i)));
+            varDefine.exprs.forEach(expr -> {
+                ((ExprNode) expr).mults.forEach(mult -> {
+                    ((MultNode) mult).subexprs.forEach(subexpr -> {
+                        if (!(((SubexprNode) subexpr).type.equals(""))
+                           & (!(varDefine.type.equals(((SubexprNode) subexpr).type)))
+                           & (!((SubexprNode) subexpr).type.equals("id"))){
+                            System.out.println("Type compatibility error! \n" +
+                                    "Required type: " + varDefine.type + "\n" +
+                                    "Provided: " + ((SubexprNode) subexpr).type);
+                            throw new RuntimeException();
+                        }
+                    });
+                });
+            });
         }
         else if(ctx.var_value() != null) {
             varDefine.arrValues = new ArrayList<>();
             for (int i = 0; i < ctx.var_value().size(); i++)
                 varDefine.arrValues.add(this.visitVar_value(ctx.var_value(i)));
+
         }
         return varDefine;
     }
@@ -97,18 +126,30 @@ public class MyCoolVisior extends LangBaseVisitor<Node>{
     @Override
     public Node visitVar_value(LangParser.Var_valueContext ctx) {
         VarValueNode varValue = new VarValueNode();
-        if(ctx.INT() != null )
+        if(ctx.INT() != null ) {
             varValue.value = ctx.INT().getText();
-        else if(ctx.CHAR() != null )
+            varValue.type = "int";
+        }
+        else if(ctx.CHAR() != null ) {
             varValue.value = ctx.CHAR().getText();
-        else if(ctx.FLOAT() != null )
+            varValue.type = "char";
+        }
+        else if(ctx.FLOAT() != null ) {
             varValue.value = ctx.FLOAT().getText();
-        else if(ctx.STRING() != null )
+            varValue.type = "float";
+        }
+        else if(ctx.STRING() != null ) {
             varValue.value = ctx.STRING().getText();
-        else if(ctx.ID() != null )
+            varValue.type = "string";
+        }
+        else if(ctx.ID() != null ) {
             varValue.value = ctx.ID().getText();
-        else if(ctx.NULL() != null )
+            varValue.type = "id";
+        }
+        else if(ctx.NULL() != null ) {
             varValue.value = ctx.NULL().getText();
+            varValue.type = "null";
+        }
 
         return varValue;
     }
@@ -117,6 +158,10 @@ public class MyCoolVisior extends LangBaseVisitor<Node>{
     public Node visitAssign(LangParser.AssignContext ctx) {
         AssignNode assign = new AssignNode();
         assign.id = ctx.ID().getText();
+        if (!isVarDeclared(assign.id)) {
+            System.out.println("Undeclared variable " + assign.id + "!");
+            throw new RuntimeException();
+        }
         assign.expr = this.visitExpr(ctx.expr());
         return assign;
     }
@@ -220,8 +265,11 @@ public class MyCoolVisior extends LangBaseVisitor<Node>{
         SubexprNode subexpr = new SubexprNode();
         if(ctx.expr()!= null)
             subexpr.expr = this.visitExpr(ctx.expr());
-        else if (ctx.var_value()!=null)
-            subexpr.expr = this.visitVar_value(ctx.var_value());
+        else if (ctx.var_value()!=null) {
+            VarValueNode varValue = (VarValueNode) this.visitVar_value(ctx.var_value());
+            subexpr.expr = varValue;
+            subexpr.type = varValue.type;
+        }
         return subexpr;
     }
 
